@@ -52,6 +52,7 @@ def launch_setup(context, *args, **kwargs):
     ur_tf_prefix = LaunchConfiguration("ur_tf_prefix")
     activate_joint_controller = LaunchConfiguration("activate_joint_controller")
     initial_joint_controller = LaunchConfiguration("initial_joint_controller")
+    spawn_admittance_controller = LaunchConfiguration("spawn_admittance_controller")
     description_file = LaunchConfiguration("description_file")
     launch_rviz = LaunchConfiguration("launch_rviz")
     rviz_config_file = LaunchConfiguration("rviz_config_file")
@@ -166,13 +167,16 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(launch_rviz),
     )
 
+    initial_joint_controllers = [initial_joint_controller]
+    if IfCondition(spawn_admittance_controller).evaluate(context):
+        initial_joint_controllers.append("admittance_controller")
+
     # There may be other controllers of the joints, but this is the initially-started one
     initial_joint_controller_spawner_started = Node(
         package="controller_manager",
         executable="spawner",
         arguments=[
-            initial_joint_controller,
-            "admittance_controller",
+            *initial_joint_controllers,
             "--activate-as-group",
             "-c",
             "/controller_manager",
@@ -184,8 +188,7 @@ def launch_setup(context, *args, **kwargs):
         package="controller_manager",
         executable="spawner",
         arguments=[
-            initial_joint_controller,
-            "admittance_controller",
+            *initial_joint_controllers,
             "-c",
             "/controller_manager",
             "--inactive",
@@ -345,7 +348,7 @@ def generate_launch_description():
     declared_arguments.append(
         DeclareLaunchArgument(
             "safety_limits",
-            default_value="true",
+            default_value="false",
             description="Enables the safety limits controller if true.",
         )
     )
@@ -394,6 +397,13 @@ def generate_launch_description():
             "initial_joint_controller",
             default_value="joint_trajectory_controller",
             description="Robot controller to start.",
+        )
+    )
+    declared_arguments.append(
+        DeclareLaunchArgument(
+            "spawn_admittance_controller",
+            default_value="true",
+            description="If true, then the admittance controller is spawned alongside the initial_joint_controller. Else, only the initial_joint_controller is spawned.",
         )
     )
     declared_arguments.append(

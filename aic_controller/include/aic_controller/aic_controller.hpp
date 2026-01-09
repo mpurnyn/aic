@@ -23,16 +23,21 @@
 #include <string>
 
 #include "aic_controller/actions/cartesian_impedance_action.hpp"
+#include "aic_controller/actions/gravity_compensation_action.hpp"
 #include "aic_controller/cartesian_limits.hpp"
 #include "aic_controller/cartesian_state.hpp"
 #include "aic_controller/utils.hpp"
 #include "controller_interface/controller_interface.hpp"
+#include "joint_limits/joint_limits.hpp"
+#include "joint_limits/joint_limits_urdf.hpp"
 #include "kinematics_interface/kinematics_interface.hpp"
 #include "pluginlib/class_loader.hpp"
 #include "rclcpp_lifecycle/state.hpp"
 #include "realtime_tools/realtime_publisher.hpp"
 #include "realtime_tools/realtime_thread_safe_box.hpp"
+#include "semantic_components/force_torque_sensor.hpp"
 #include "tf2_eigen/tf2_eigen.hpp"
+#include "urdf/model.hpp"
 
 // Interfaces
 #include "aic_control_interfaces/msg/controller_state.hpp"
@@ -126,7 +131,9 @@ class Controller : public controller_interface::ControllerInterface {
    *
    * @param state_current Sensed joint states
    */
-  void read_state_from_hardware(JointTrajectoryPoint& state_current);
+  void read_state_from_hardware(
+      JointTrajectoryPoint& state_current,
+      Eigen::Matrix<double, 6, 1>& sensed_wrench_at_tip);
 
   /**
    * @brief Write values from state_command to claimed command interfaces
@@ -191,6 +198,13 @@ class Controller : public controller_interface::ControllerInterface {
       const double control_frequency, const uint8_t& mode,
       CartesianState& new_reference);
 
+  /**
+   * @brief Interpolate the parameters for the cartesian impedance control
+   * stiffness and damping matrix, and the feedforward wrench at the tip.
+   *
+   */
+  void interpolate_impedance_parameters();
+
   // controller parameters
   std::shared_ptr<aic_controller::ParamListener> param_listener_;
   aic_controller::Params params_;
@@ -200,9 +214,18 @@ class Controller : public controller_interface::ControllerInterface {
   ControlMode control_mode_;
 
   CartesianLimits cartesian_limits_;
+  std::vector<joint_limits::JointLimits> joint_limits_;
 
   // Impedance controller for cartesian targets
   std::unique_ptr<CartesianImpedanceAction> cartesian_impedance_action_;
+  CartesianImpedanceParameters impedance_params_;
+  // Feedforward wrench at tool tip
+  Eigen::Matrix<double, 6, 1> feedforward_wrench_at_tip_;
+  // Current wrench sensed from force torque sensor at tool tip
+  Eigen::Matrix<double, 6, 1> sensed_wrench_at_tip_;
+
+  // Gravity Compensation action
+  std::unique_ptr<GravityCompensationAction> gravity_compensation_action_;
 
   // ROS2 subscribers for user commands
   rclcpp::Subscription<MotionUpdate>::SharedPtr motion_update_sub_;
@@ -232,6 +255,8 @@ class Controller : public controller_interface::ControllerInterface {
   // todo(johntgz) Investigate if we can replace last_tool_reference_ with
   // current_tool_state_
   CartesianState last_tool_reference_;
+  // The last computed error between the current and target tool pose
+  Eigen::Matrix<double, 6, 1> last_tool_pose_error_;
 
   double time_to_target_seconds_;
   double remaining_time_to_target_seconds_;
@@ -240,6 +265,9 @@ class Controller : public controller_interface::ControllerInterface {
       pluginlib::ClassLoader<kinematics_interface::KinematicsInterface>>
       kinematics_loader_;
   std::unique_ptr<kinematics_interface::KinematicsInterface> kinematics_;
+
+  // force torque sensor
+  std::unique_ptr<semantic_components::ForceTorqueSensor> force_torque_sensor_;
 };
 
 }  // namespace aic_controller
