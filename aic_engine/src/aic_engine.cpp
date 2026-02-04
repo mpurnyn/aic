@@ -450,6 +450,15 @@ EngineState Engine::initialize() {
     return engine_state_;
   }
 
+  // Make sure a valid clock is received, it takes time to initialize
+  // the subscriber and following timeout calls might fail otherwise
+  RCLCPP_INFO(node_->get_logger(), "Waiting for clock");
+  if (!node_->get_clock()->wait_until_started(rclcpp::Duration(10, 0))) {
+    RCLCPP_ERROR(node_->get_logger(), "Failed to find a valid clock");
+    return EngineState::Error;
+  }
+  RCLCPP_INFO(node_->get_logger(), "Clock found successfully.");
+
   // Create ROS endpoints.
   const rclcpp::QoS reliable_qos = rclcpp::QoS(rclcpp::KeepLast(10)).reliable();
 
