@@ -199,7 +199,7 @@ Add these environment variables to your shell (required in all terminals):
 
 ```bash
 export RMW_IMPLEMENTATION=rmw_zenoh_cpp
-export ZENOH_CONFIG_OVERRIDE='transport/shared_memory/enabled=true'
+export ZENOH_CONFIG_OVERRIDE='transport/shared_memory/enabled=true;transport/shared_memory/transport_optimization/pool_size=536870912'
 ```
 
 **4. Running the System**
@@ -209,7 +209,7 @@ You'll need three terminals. Source the workspace and set environment variables 
 ```bash
 source ~/ws_aic/install/setup.bash
 export RMW_IMPLEMENTATION=rmw_zenoh_cpp
-export ZENOH_CONFIG_OVERRIDE='transport/shared_memory/enabled=true'
+export ZENOH_CONFIG_OVERRIDE='transport/shared_memory/enabled=true;transport/shared_memory/transport_optimization/pool_size=536870912'
 ```
 
 **Terminal 1 - Start Zenoh Router:**
@@ -302,7 +302,7 @@ After setting up your environment, you can test your policy implementation:
 **Terminal 1 - Start Zenoh Router:**
 ```bash
 source ~/ws_aic/install/setup.bash
-export ZENOH_CONFIG_OVERRIDE='transport/shared_memory/enabled=true'
+export ZENOH_CONFIG_OVERRIDE='transport/shared_memory/enabled=true;transport/shared_memory/transport_optimization/pool_size=536870912'
 ros2 run rmw_zenoh_cpp rmw_zenohd
 ```
 
@@ -310,7 +310,7 @@ ros2 run rmw_zenoh_cpp rmw_zenohd
 ```bash
 source ~/ws_aic/install/setup.bash
 export RMW_IMPLEMENTATION=rmw_zenoh_cpp
-export ZENOH_CONFIG_OVERRIDE='transport/shared_memory/enabled=true'
+export ZENOH_CONFIG_OVERRIDE='transport/shared_memory/enabled=true;transport/shared_memory/transport_optimization/pool_size=536870912'
 ros2 launch aic_bringup aic_gz_bringup.launch.py ground_truth:=false start_aic_engine:=true
 ```
 
@@ -320,7 +320,7 @@ ros2 launch aic_bringup aic_gz_bringup.launch.py ground_truth:=false start_aic_e
 ```bash
 source ~/ws_aic/install/setup.bash
 export RMW_IMPLEMENTATION=rmw_zenoh_cpp
-export ZENOH_CONFIG_OVERRIDE='transport/shared_memory/enabled=true'
+export ZENOH_CONFIG_OVERRIDE='transport/shared_memory/enabled=true;transport/shared_memory/transport_optimization/pool_size=536870912'
 ros2 run aic_model aic_model --ros-args -p policy:=aic_example_policies.ros.WaveArm
 ```
 
@@ -337,7 +337,7 @@ To manually submit a task,
 ```bash
 source ~/ws_aic/install/setup.bash
 export RMW_IMPLEMENTATION=rmw_zenoh_cpp
-export ZENOH_CONFIG_OVERRIDE='transport/shared_memory/enabled=true'
+export ZENOH_CONFIG_OVERRIDE='transport/shared_memory/enabled=true;transport/shared_memory/transport_optimization/pool_size=536870912'
 cd ~/ws_aic/src/aic/aic_model/test
 ./create_and_cancel_task.py
 ```
